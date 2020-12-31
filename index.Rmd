@@ -1,0 +1,121 @@
+---
+title: Identifying Points of Controversy Around Animal Research Among UW--Madison
+  Students & Faculty With Gradient-Boosted Machines
+author: "Michael Mays"
+date: 'Originally prepared: December 2020'
+output:
+  bookdown::html_document2:
+    fig_caption: yes
+    number_sections: no
+    toc: yes
+    toc_float: yes
+fontsize: 11pt
+bibliography: ./Citations/Proj.bib
+csl: ./Citations/vancouver.csl
+header-includes:
+- \usepackage{xcolor}
+- \usepackage{graphicx}
+- \usepackage{colortbl}
+- \usepackage{float}
+- \usepackage{enumitem}
+- \usepackage{amsmath}
+- \usepackage{subfig}
+- \usepackage{hyperref}
+- \hypersetup{breaklinks=true}
+- \usepackage{titling}
+- \usepackage[square, numbers]{natbib}
+- \bibliographystyle{unsrtnat}
+- \usepackage{caption}
+- \captionsetup[figure]{font=scriptsize}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F, message=F,
+                      warning=F, fig.width=10,
+                      fig.height=8,
+                      out.width="\\linewidth")
+
+library(tidyverse)
+library(grid)
+library(gtable)
+library(ggh4x)
+library(ggpmisc)
+library(gridExtra)
+library(xtable)
+w <- tidyselect::vars_select_helpers$where
+
+`%notin%` <- Negate(`%in%`)
+
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73",
+               "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+source("./Scripts/functions.R")
+load("./Data/dat_file.RData")
+load("./Data/var_imp.RData")
+load("./Data/proj_vec.RData")
+```
+
+# Introduction
+
+Use of non-human animals in scientific research is controversial both ethically and practically. As such, non-human animal research is a scientific topic on which public opinion is particularly important [@hobson]. Davies et. al argue that a key part of this project is determining which dimensions of non-human animal research are of particular interest to the public [@davies]. This plays a central role in agenda setting on non-human animal research, as it allows actors within the regulatory process to understand and respond to the beliefs of outside stakeholders, and to identify these stakeholders for such purposes [@davies; @longname; @Ormandy; @scheufele]. To this end, scales have been to measure four dimensions of perceived justifiability of non-human animal research: respondents' feelings about the nature of human-animal relationships generally, the research purpose, the species of non-human animal involved, the level of pain and distress inflicted in the course of conducting the research [@herzog; @herzog2; @OrigPaper]. These scales are termed Animal Attitudes Scale (AAS), Animal Research Attitude Scale--Purpose (ARAS-P), Animal Research Attitude Scale--Species (ARAS-S), and Animal Research Attitude Scale--Pain & Distress (ARAS-PD), respectively. This paper deploys gradient-boosted machines to identify the *specific points* and *broad areas* of controversy among those expressing the strongest opinions for or against animal research along each "axis" measured by the above-described scales in a recent survey by Sandgren et al. [@OrigPaper].
+
+# Materials & Methods
+
+## Data
+
+Sandgren et al. surveyed University of Wisconsin--Madison 8,000 undergraduates and 2,153 faculty via an online questionnaire [@OrigPaper]. In total, 782 students and 945 faculty responded for a total of 1,727 respondents. The questionnaire contained 27 questions with a total of 99 items, most of which were 5-point Likert-type scales. Of particular interest are the 7 questions related to the 4 justifiability scales: one question for each of AAS (6 items), ARAS-P (7 items), and ARAS-S (5 items), plus four for ARAS-PD (33 items). Other items gathered demographic information (e.g., race), assessed personal history relevant to animal research (e.g., whether the respondent is vegetarian or vegan), measured trust in and consumption of various information sources (e.g., how much they trust animal activist groups), and gauged beliefs about relevant rules and policies (e.g., how strictly they believe animal research regulations are enforced by UW--Madison). Before analysis, items were re-coded so that higher-numbered responses always related to higher support for animal research, and four justifiability scores were calculated by meaning the items related to each scale.
+
+## Research Questions
+
+- Which *specific* survey items most distinguishing between questionnaire respondents with high [AAS/ARAS-P/ARAS-S/ARAS-PD] scores and those with low [AAS/ARAS-P/ARAS-S/ARAS-PD] scores?
+
+- Which *categories* of survey items most distinguishing between questionnaire respondents with high [AAS/ARAS-P/ARAS-S/ARAS-PD] scores and those with low [AAS/ARAS-P/ARAS-S/ARAS-PD] scores?
+
+## Model & Analysis
+
+All analyses were conducted separately for students and faculty, as per Sandgren et al.'s prior research [@OrigPaper]. Respondents were divided by score into groups corresponding to terciles (labeled "low" for the lowest third, then "moderate," and "high") for each scale. Responses in the "moderate" group were removed, leaving only those with relatively strong opinions on each scale. For each set of groups---one set for each scale grouping for students and faculty---I fit a gradient-boosted machine with group categorization as the dependent variable and all items except those related to the response grouping scale as the predictors. From each, the permutation variable importance was used to calculate proportional variable importance as the percent of total permutation variable importance attributable to each variable. This value reflects how much a given item 'divides' the "high" and "low" groups as measured by how essential it is to accurate classification.
+
+$$
+\text{Proportional VI}_i = 100\times\frac{\text{Permutation VI}_i}{\sum_j \text{Permutation VI}_j}
+$$
+
+# Results
+
+## Attitude Groups (AAS)
+
+Figure \@ref(fig:aas) shows the percent of variable importance in the AAS group model accounted for by questions that are among the 12 most important for either students or faculty, along with the percent of total variable importance accounted for by each category of variable. For faculty, the item that most distinguished the groups was birth year, followed by the justifiability of research to improve human medication or agriculture, and the justifiability of inflicting pain and distress on dogs or cats to study human diseases. For students, the justifiability of research on pigs or sheep was closely followed by agricultural purpose as the most divisive, while research on monkeys was relatively controversial as well. The two most important items for students and faculty also represent the items with the largest difference between student and faculty. Finally, purpose and demographics are the most divisive categories, while for students, species is most divisive with purpose as a close second.
+
+```{r aas, include=T, fig.align="center", fig.cap="Proportional variable importance in classifying \"high\" and \"low\" AAS group membership among faculty (left) and students (right) with total proportional importance by category for each, and student--faculty differences by item (center)."}
+my_plot_func(dat_plot_group2, "AAS", 12)
+```
+
+## Purpose Groups (ARAS-P)
+
+Similarly, figure \@ref(fig:aras-p) shows the percent of variable importance in the ARAS-P group model as described above. Among faculty, the most divisive item was their attitude towards using animals for medical research followed by birth year, the justifiability of using pigs and sheep, and conducting basic research about bodily function on monkeys. For students, the use of pigs or sheep was the most divisive, as with AAS. The next most-important dividing line was the use of rats and mice, followed by chemical safety research involving monkeys. Again, the two most important items for students and faculty also represent the largest student--faculty divide. For students, species is again most divisive by a wide margin, while important faculty items are spread relatively evenly between pain/distress, attitude, species, and demographics.
+
+```{r aras-p, include=T, fig.align="center", fig.cap="Proportional variable importance in classifying \"high\" and \"low\" ARAS-P group membership among faculty (left) and students (right) with total proportional importance by category for each, and student--faculty differences by item (center)."}
+my_plot_func(dat_plot_group2, "ARAS_P", 12)
+```
+
+## Species Groups (ARAS-S)
+
+Figure \@ref(fig:aras-s) shows the percent of variable importance in the ARAS-S group model as described above. For members of faculty, the most divisive items were attitudes towards using animals for basic biological research and for human diseases, followed by birth year and using animals to study human medication. Among students, the most important item was their general attitude towards using animals in medical research, and the use of rats to study human diseases, along with the top two items from the faculty model. Again, the two most important items for students and faculty also represent the largest student--faculty divide. Students' variable importance was split relatively evenly among attitude, pain/distress and purpose. Faculty between-group disagreement, however, was concentrated almost wholly in the purpose category.
+
+```{r aras-s, include=T, fig.align="center", fig.cap="Proportional variable importance in classifying \"high\" and \"low\" ARAS-S group membership among faculty (left) and students (right) with total proportional importance by category for each, and student--faculty differences by item (center)."}
+my_plot_func(dat_plot_group2, "ARAS_S", 12)
+```
+
+## Pain & Distress Groups (ARAS-PD)
+
+Figure \@ref(fig:aras-pd) shows the percent of variable importance in the ARAS-PD group model. As with AAS, the most divisive item among the faculty was birth year; the next-most controversial were the use of pigs or sheep and dogs or cats in animal research. For students, the use of mice and rats most divided the ARAS-PD groups followed by the use of animals to study chemical safety. The next three items---using pigs or sheep, dogs or cats, and small fish for research---are clustered together between 6--7\%. Again, the two most important items for students and faculty were also the items where the student--faculty divide was most pronounced. Faculty disagreement was concentrated in the demographic category (mainly due to birth year), while species came in second and purpose followed closely behind. For students, species was almost as important as demographics were for faculty, while purpose was nearly as important as species was for faculty. This is also the set of groups where source-related items played the largest role, accounting for 13.5\% of variable importance.
+
+```{r aras-pd, include=T, fig.align="center", fig.cap="Proportional variable importance in classifying \"high\" and \"low\" ARAS-PD group membership among faculty (left) and students (right) with total proportional importance by category for each, and student--faculty differences by item (center)."}
+my_plot_func(dat_plot_group2, "ARAS_H", 12)
+```
+
+# Discussion & Conclusion
+
+The most surprising result is the importance of birth year to distinguishing faculty AAS and ARAS-PD groups. Neither Sandgren et al. [@OrigPaper] nor my prior analyses included this predictor, and its consistent importance warrants further investigation into, for example, the existence of a cohort effect in support for animal research. Among students, a species item was the most discriminatory in all three non-ARAS-S models; twice, this variable was the use of pigs and sheep in scientific research, and the use of rats and mice was also fairly important to dividing ARAS-P groups. Faculty ARAS-P and ARAS-PD groups were moderately divided by species and similarly tended to be most split on research involving pigs and sheep relative to other species. Overall, though, purpose was more important in dividing faculty groups, particularly ARAS-S groups. And neither faculty nor student groups for any scale were particularly divided in their beliefs about the rules and regulations governing animal research, which suggests that inter-group cleavages are not primarily centered on the sufficiency of procedures, but rather the conduct of the research itself---its purpose, the species on which it is enacted, and the use of pain or distress---and their more general attitudes towards human--non-human animal relationships.
+
+It is worth noting that this analysis is primarily descriptive and exploratory; my goal is merely to characterize the UW--Madison students and faculty who filled out this particular online questionnaire. This analysis yielded, I believe, thought-provoking insights on this set of respondents---some of which might warrant further investigation---but it is not particularly rigorous in a statistical sense. In other words, it is not intended to play the role of concretely identifying key stakeholders or controversies *on its own*, but rather to tease out fruitful directions for that work. As such, I have avoided conducting statistical inference, which risks communicating an unduly strong sense of confidence in the significance of these results. Still, the results sit well both as a supplement to and in contrast with the results found in Sandgren et al. [@OrigPaper] and my own prior work.
+
+# References
